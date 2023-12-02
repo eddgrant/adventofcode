@@ -3,7 +3,7 @@ package com.eddgrant.adventofcode.twentytwo
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class Day6 : StringSpec({
+class Day6Spec : StringSpec({
 
     val testFileContent = ElfUtils.getFileContent("/2022/day6/test-input.txt").lines().first()
     val realFileContent = ElfUtils.getFileContent("/2022/day6/real-input.txt").lines().first()

@@ -6,6 +6,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.ints.shouldBeExactly
 
 val allNumberWordsAndDigits = Regex("(?=(zero|one|two|three|four|five|six|seven|eight|nine|\\d))")
+
 class Day1Spec : StringSpec({
 
     "Part 1: Test data: Consider your entire calibration document. What is the sum of all of the calibration values?" {

@@ -4,6 +4,7 @@ import com.eddgrant.adventofcode.DataProvider
 import com.eddgrant.adventofcode.DataType
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.ints.shouldBeExactly
+import kotlin.math.max
 
 
 enum class Colour {
@@ -61,6 +62,18 @@ class BagOfCubesGameResultParser {
             val sumOfIdsOfPlayableGames = calculateSumOfIdsOfPlayableGames(inputData, bagOfCubes)
             println("The sum of the ids of the playable games is: $sumOfIdsOfPlayableGames")
         }
+
+        "Part 2 : Test data: What is the sum of the power of these sets?" {
+            val inputData = DataProvider.getData(2023, 2, 1, DataType.TEST)
+            val sumOfIdsOfPlayableGames = calculateSumOfPowerOfPlayableGames(inputData)
+            sumOfIdsOfPlayableGames.shouldBeExactly(2286)
+        }
+
+        "Part 2 : Real data: What is the sum of the power of these sets?" {
+            val inputData = DataProvider.getData(2023, 2, 1, DataType.REAL)
+            val sumOfPowers = calculateSumOfPowerOfPlayableGames(inputData)
+            println("The sum of the power of these sets is: $sumOfPowers")
+        }
     })
 
 private fun calculateSumOfIdsOfPlayableGames(inputData: String, bagOfCubes: BagOfCubes) =
@@ -75,5 +88,20 @@ private fun calculateSumOfIdsOfPlayableGames(inputData: String, bagOfCubes: BagO
                 0
             } else {
                 gameResult.gameId
+            }
+}
+
+private fun calculateSumOfPowerOfPlayableGames(inputData: String) =
+    BagOfCubesGameResultParser()
+        .parseResults(inputData.lines())
+        .map { gameResult ->
+            gameResult.cubeDraws.fold(mapOf()) { acc: Map<Colour, Int>, cubeDraw: Map<Cube, Int> ->
+                acc + cubeDraw.map { (cube, count) ->
+                    cube.colour to max(count, acc.getOrDefault(cube.colour, count))
+                }.toMap()
+            }
+        }.fold(0) { acc, coloursToCounts ->
+            acc + coloursToCounts.values.fold(1) { accumulator, count ->
+                accumulator * count
             }
         }

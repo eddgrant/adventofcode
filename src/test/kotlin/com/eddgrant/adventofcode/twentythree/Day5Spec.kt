@@ -4,27 +4,49 @@ import com.eddgrant.adventofcode.DataProvider
 import com.eddgrant.adventofcode.DataType
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlin.math.min
 
     class Day5Spec : StringSpec({
 
     "Part 1 : Test data: What is the lowest location number that corresponds to any of the initial seed numbers?" {
         val inputData = DataProvider.getData(2023, 5, 1, DataType.TEST)
-        val locationResolver = LocationResolver.fromSpec(inputData)
+        val locationResolver = LocationResolver.fromSpec(inputData, false)
         val lowestLocationNumber = locationResolver.getLowestLocationNumber()
         lowestLocationNumber.shouldBe(35)
     }
 
     "Part 1 : Real data: What is the lowest location number that corresponds to any of the initial seed numbers?" {
         val inputData = DataProvider.getData(2023, 5, 1, DataType.REAL)
-        val locationResolver = LocationResolver.fromSpec(inputData)
+        val locationResolver = LocationResolver.fromSpec(inputData, true)
+        val lowestLocationNumber = locationResolver.getLowestLocationNumber()
+        //println("Lowest location number is: $lowestLocationNumber")
+    }
+
+    "Part 2 : Test data: What is the lowest location number that corresponds to any of the initial seed numbers?" {
+        val inputData = DataProvider.getData(2023, 5, 1, DataType.TEST)
+        val locationResolver = LocationResolver.fromSpec(inputData, true)
+        val lowestLocationNumber = locationResolver.getLowestLocationNumber()
+        lowestLocationNumber.shouldBe(46)
+    }
+
+    "Part 2 : Real data: What is the lowest location number that corresponds to any of the initial seed numbers?" {
+        val inputData = DataProvider.getData(2023, 5, 1, DataType.REAL)
+        val locationResolver = LocationResolver.fromSpec(inputData, true)
         val lowestLocationNumber = locationResolver.getLowestLocationNumber()
         println("Lowest location number is: $lowestLocationNumber")
+    }
+
+    "Test getSeeds" {
+        val inputData = DataProvider.getData(2023, 5, 1, DataType.REAL)
+        val locationResolver = LocationResolver.fromSpec(inputData, true)
+        println(locationResolver.getSeeds().last())
     }
 
 })
 
 class LocationResolver private constructor(
-    val seedNumbers : Set<Long>,
+    val seedNumbers : Sequence<Long>?,
+    val seedRanges : Sequence<LongRange>?,
     val seedToSoilResolver : SourceToDestinationResolver,
     val soilToFertiliserResolver : SourceToDestinationResolver,
     val fertiliserToWaterResolver : SourceToDestinationResolver,
@@ -34,7 +56,34 @@ class LocationResolver private constructor(
     val humidityToLocationResolver : SourceToDestinationResolver,
 ) {
 
-    fun getLowestLocationNumber() : Long = seedNumbers
+    fun getSeeds(): Sequence<Long> = seedNumbers!!.ifEmpty {
+        seedRanges!!.flatMap {
+            it.map { seedValue ->
+                seedValue
+            }
+        }
+    }
+
+    var count = 3L
+    /*fun getSeedsNicely(): Sequence<Long> = generateSequence {
+        testif(seedRanges!!.iterator().hasNext()) {
+            var currentRange = seedRanges.iterator().next()
+            if(currentRange.iterator().hasNext()) {
+                currentRange.iterator().next()
+            }
+            else {
+                seedRanges.iterator().next()
+            }
+        }
+
+
+
+        //(count--).takeIf { it > 0 } // will return null, when value becomes non-positive,
+        // and that will terminate the sequence
+    }*/
+
+
+    fun getLowestLocationNumber() : Long = getSeeds()
             .map { seedToSoilResolver.resolve(it) }
             .map { soilToFertiliserResolver.resolve(it) }
             .map { fertiliserToWaterResolver.resolve(it) }
@@ -42,7 +91,10 @@ class LocationResolver private constructor(
             .map { lightToTemperatureResolver.resolve(it) }
             .map { temperatureToHumidityResolver.resolve(it) }
             .map { humidityToLocationResolver.resolve(it) }
-            .min()
+            .fold(0L) { acc, current ->
+                //println("Comparing $current and $acc")
+                if(acc == 0L) current else { min(current, acc) }
+            }
 
     companion object {
 
@@ -56,7 +108,8 @@ class LocationResolver private constructor(
         val humidityToLocationSectionRegexp = Regex("^humidity-to-location map:$")
 
 
-        val seedNumbers : MutableSet<Long> = mutableSetOf()
+        lateinit var seedNumbers : Sequence<Long>
+        lateinit var seedRanges : Sequence<LongRange>
         val seedToSoilRangeResolvers = mutableSetOf<SourceToDestinationRangeResolver>()
         val soilToFertiliserRangeResolvers = mutableSetOf<SourceToDestinationRangeResolver>()
         val fertiliserToWaterRangeResolvers = mutableSetOf<SourceToDestinationRangeResolver>()
@@ -75,14 +128,26 @@ class LocationResolver private constructor(
             resolverCollection.add(SourceToDestinationRangeResolver(numbers[0], numbers[1], numbers[2]))
         }
 
-        fun fromSpec(spec : String) : LocationResolver {
+        fun fromSpec(spec : String, seedsAsRanges : Boolean) : LocationResolver {
             var currentSection: String? = null
             spec.lines()
                 .map { it.trim() }
                 .forEach { specLine ->
                     when {
                         seedsSectionRegexp.matches(specLine) -> {
-                            seedNumbers.addAll(NUMBER_MATCHER.findAll(specLine).map { it.value.toLong() })
+                            if(seedsAsRanges) {
+                                seedNumbers = emptySequence()
+                                seedRanges = NUMBER_MATCHER.findAll(specLine)
+                                        .map { it.value.toLong() }
+                                        .chunked(2)
+                                        .map {
+                                            it.first()..< it.first() + it.last()
+                                        }
+                            }
+                            else {
+                                seedNumbers = NUMBER_MATCHER.findAll(specLine).map { it.value.toLong() }
+                                seedRanges = emptySequence()
+                            }
                             print("Seeds identified: $seedNumbers")
                             return@forEach
                         }
@@ -181,6 +246,7 @@ class LocationResolver private constructor(
                 }
             return LocationResolver(
                 seedNumbers,
+                seedRanges,
                 SourceToDestinationResolver("Seed", "Soil", seedToSoilRangeResolvers),
                 SourceToDestinationResolver("Soil", "Fertiliser", soilToFertiliserRangeResolvers),
                 SourceToDestinationResolver("Fertiliser", "Water", fertiliserToWaterRangeResolvers),
@@ -200,11 +266,11 @@ class SourceToDestinationResolver(
     private val rangeResolvers: Set<SourceToDestinationRangeResolver>
 ) {
     fun resolve(source: Long) : Long {
-        println("$sourceType to $destinationType resolver:")
+        //println("$sourceType to $destinationType resolver:")
         return try {
             rangeResolvers.firstNotNullOf { it.resolve(source) }
         } catch (_ : NoSuchElementException) {
-            println("\t No range resolver found for source '${source}'. Using source value.")
+            //println("\t No range resolver found for source '${source}'. Using source value.")
             source
         }
     }
@@ -221,7 +287,7 @@ data class SourceToDestinationRangeResolver(
     fun resolve(source: Long) : Long? {
         return if(sourceRange.contains(source)) {
             val destination = destRange.first + (source - sourceRange.first)
-            println("\t Source '$source' resolves to destination '${destination}")
+            //println("\t Source '$source' resolves to destination '${destination}")
             destination
         } else {
             null

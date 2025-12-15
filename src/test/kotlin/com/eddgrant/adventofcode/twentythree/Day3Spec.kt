@@ -115,7 +115,7 @@ private fun getSumOfAllGearRatios(inputData: String): Int {
             val secondLineGearMatches = gearMatcher.findAll(secondLine)
 
             val thirdLineNumberMatches = numberMatcher.findAll(thirdLine)
-            val thirdLineGearMatches = gearMatcher.findAll(thirdLine)
+            //val thirdLineGearMatches = gearMatcher.findAll(thirdLine)
 
             (
                 findGearRatios(firstLineNumberMatches, firstLineGearMatches) + // Search entirely within the first line.

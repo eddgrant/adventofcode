@@ -87,7 +87,7 @@ abstract class AbstractCrateMover(initialCrateLayout: String) : CrateMover {
         val crateArrangements = initialCrateLayout.lines().subList(0, initialCrateLayout.lines().size - 1).reversed()
         val emptyCrateContainers: List<Stack> = (1..numberOfStacks).map { Stack() }
 
-        return crateArrangements.foldIndexed(emptyCrateContainers) { index, acc: List<Stack>, crateArrangementLayer: String ->
+        return crateArrangements.foldIndexed(emptyCrateContainers) { _, acc: List<Stack>, crateArrangementLayer: String ->
             val stackTraversalRange = 0..< numberOfStacks * CRATE_DEFINITION_CHARACTER_WIDTH step CRATE_DEFINITION_CHARACTER_WIDTH
             stackTraversalRange.forEachIndexed { stackIndex, crateStartingIndex ->
                 try {

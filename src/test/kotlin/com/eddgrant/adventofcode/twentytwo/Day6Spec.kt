@@ -11,20 +11,16 @@ class Day6Spec : StringSpec({
     "Part 1: Test data: How many characters need to be processed before the first start-of-packet marker is detected?" {
         val expectedResult = 7
         val firstBlockWithoutCharacterRepetition = testFileContent
-            .windowed(4, 1, true)
-            .first {
-                it.toSet().size == 4
-            }
+            .windowedSequence(4, 1, false)
+            .first { it.toSet().size == 4 }
         val actualResult = testFileContent.indexOf(firstBlockWithoutCharacterRepetition) + 4
         actualResult.shouldBe(expectedResult)
     }
 
     "Part 1: Real data: How many characters need to be processed before the first start-of-packet marker is detected?" {
         val firstBlockWithoutCharacterRepetition = realFileContent
-            .windowed(4, 1, true)
-            .first {
-                it.toSet().size == 4
-            }
+            .windowedSequence(4, 1, false)
+            .first { it.toSet().size == 4 }
         val actualResult = realFileContent.indexOf(firstBlockWithoutCharacterRepetition) + 4
         print("The answer is $actualResult")
     }

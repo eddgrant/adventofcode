@@ -18,7 +18,7 @@ import kotlin.math.min
     "Part 1 : Real data: What is the lowest location number that corresponds to any of the initial seed numbers?" {
         val inputData = DataProvider.getData(2023, 5, 1, DataType.REAL)
         val locationResolver = LocationResolver.fromSpec(inputData, true)
-        val lowestLocationNumber = locationResolver.getLowestLocationNumber()
+        //val lowestLocationNumber = locationResolver.getLowestLocationNumber()
         //println("Lowest location number is: $lowestLocationNumber")
     }
 

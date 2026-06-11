@@ -1,4 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>eddgrant/renovate-config"]
+  "extends": ["github>eddgrant/renovate-config"],
+  "packageRules": [
+    {
+      "description": "No CI in this repo, so Renovate updates are unverified — never automerge here.",
+      "matchPackageNames": ["*"],
+      "automerge": false
+    }
+  ]
 }
